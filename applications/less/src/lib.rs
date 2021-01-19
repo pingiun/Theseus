@@ -159,7 +159,7 @@ fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
     };
     locked_terminal.clear();
     locked_terminal.print_to_terminal(
-        content[start_indices.start..end_indices.end].to_string()
+        &content[start_indices.start..end_indices.end]
     );
     locked_terminal.refresh_display()
 }

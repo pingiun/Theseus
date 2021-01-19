@@ -272,7 +272,7 @@ impl Shell {
         self.cmdline = s.clone();
         self.update_cursor_pos(0)?;
         if sync_terminal {
-            self.terminal.lock().print_to_terminal(s);
+            self.terminal.lock().print_to_terminal(&s);
         }
         Ok(())
     }
@@ -404,7 +404,7 @@ impl Shell {
                     None => {
                         self.clear_cmdline(true)?;
                         self.input_buffer.clear();
-                        self.terminal.lock().print_to_terminal("^C\n".to_string());
+                        self.terminal.lock().print_to_terminal("^C\n");
                         self.redisplay_prompt();
                         return Ok(());
                     }
@@ -439,11 +439,11 @@ impl Shell {
                         }
                     }
                 });
-                self.terminal.lock().print_to_terminal("^C\n".to_string());
+                self.terminal.lock().print_to_terminal("^C\n");
             } else {
                 self.clear_cmdline(false)?;
                 self.input_buffer.clear();
-                self.terminal.lock().print_to_terminal("^C\n".to_string());
+                self.terminal.lock().print_to_terminal("^C\n");
                 self.history_index = 0;
                 self.redisplay_prompt();
             }
@@ -527,13 +527,13 @@ impl Shell {
             let cmdline = self.cmdline.clone();
             if cmdline.len() == 0 && self.fg_job_num.is_none() {
                 // reprints the prompt on the next line if the user presses enter and hasn't typed anything into the prompt
-                self.terminal.lock().print_to_terminal("\n".to_string());
+                self.terminal.lock().print_to_terminal("\n");
                 self.redisplay_prompt();
                 return Ok(());
             } else if let Some(ref fg_job_num) = self.fg_job_num { // send buffered characters to the running application
                 match self.jobs.get(fg_job_num) {
                     Some(job) => {
-                        self.terminal.lock().print_to_terminal("\n".to_string());
+                        self.terminal.lock().print_to_terminal("\n");
                         let mut buffered_string = String::new();
                         mem::swap(&mut buffered_string, &mut self.input_buffer);
                         buffered_string.push('\n');
@@ -544,7 +544,7 @@ impl Shell {
                 }
                 return Ok(());
             } else { // start a new job
-                self.terminal.lock().print_to_terminal("\n".to_string());
+                self.terminal.lock().print_to_terminal("\n");
                 self.command_history.push(cmdline.clone());
                 self.command_history.dedup(); // Removes any duplicates
                 self.history_index = 0;
@@ -560,8 +560,7 @@ impl Shell {
                     if let Some(last) = self.cmdline.split_whitespace().last() {
                         if last == "&" {
                             self.terminal.lock().print_to_terminal(
-                                format!("[{}] [running] {}\n", new_job_num, self.cmdline)
-                                .to_string()
+                                &format!("[{}] [running] {}\n", new_job_num, self.cmdline)
                             );
                             self.fg_job_num = None;
                             self.clear_cmdline(false)?;
@@ -758,7 +757,7 @@ impl Shell {
 
                     // Insert print event producer to `terminal_print` to support legacy output.
                     if let Err(msg) = terminal_print::add_child(*task_id, self.print_producer.obtain_producer()) {
-                        self.terminal.lock().print_to_terminal(format!("{}\n", msg).to_string());
+                        self.terminal.lock().print_to_terminal(&format!("{}\n", msg).to_string());
                         return Err(msg);
                     }
                 }
@@ -805,9 +804,9 @@ impl Shell {
                     AppErr::NamespaceErr      => format!("Failed to find directory of application executables.\n"),
                     AppErr::SpawnErr(e)       => format!("Failed to spawn new task to run command. Error: {}.\n", e),
                 };
-                self.terminal.lock().print_to_terminal(err_msg);
+                self.terminal.lock().print_to_terminal(&err_msg);
                 if let Err(msg) = self.clear_cmdline(false) {
-                    self.terminal.lock().print_to_terminal(format!("{}\n", msg).to_string());
+                    self.terminal.lock().print_to_terminal(&format!("{}\n", msg).to_string());
                 }
                 self.redisplay_prompt();
                 Err("Failed to evaluate command line.")
@@ -953,15 +952,15 @@ impl Shell {
         let str_num_in_line = (4 + width) / (4 + longest_len);
 
         let mut locked_terminal = self.terminal.lock();
-        locked_terminal.print_to_terminal("\n".to_string());
+        locked_terminal.print_to_terminal("\n");
 
         // If the longest string is very very long which exceeds a single line, we should
         // print them line by line. Otherwise, we put multiple results in one line and
         // separate them by four or more spaces.
         if str_num_in_line == 0 {
             for name in possible_names {
-                locked_terminal.print_to_terminal(name.to_string());
-                locked_terminal.print_to_terminal("\n".to_string());
+                locked_terminal.print_to_terminal(&name);
+                locked_terminal.print_to_terminal("\n");
             }
         } else {
             let mut current_in_line = 0;
@@ -974,24 +973,24 @@ impl Shell {
 
                 // Write to the terminal buffer.
                 if !first_in_line {
-                    locked_terminal.print_to_terminal("    ".to_string());
+                    locked_terminal.print_to_terminal("    ");
                 } else {
                     first_in_line = false;
                 }
-                locked_terminal.print_to_terminal(padded);
+                locked_terminal.print_to_terminal(&padded);
 
                 // Move to a new line if we need.
                 current_in_line += 1;
                 if current_in_line == str_num_in_line {
                     current_in_line = 0;
                     first_in_line = true;
-                    locked_terminal.print_to_terminal("\n".to_string());
+                    locked_terminal.print_to_terminal("\n");
                 }
             }
 
             // Move to a new line if the current line is not empty.
             if !first_in_line {
-                locked_terminal.print_to_terminal("\n".to_string());
+                locked_terminal.print_to_terminal("\n");
             }
         }
 
@@ -1074,7 +1073,7 @@ impl Shell {
                                 if let Some(val) = val {
                                     if *val < 0 {
                                         self.terminal.lock().print_to_terminal(
-                                            format!("task [{}] returned error value {:?}\n", exited_task_id, val)
+                                            &format!("task [{}] returned error value {:?}\n", exited_task_id, val)
                                         );
                                     }
                                 }
@@ -1087,7 +1086,7 @@ impl Shell {
                             ExitValue::Killed(kill_reason) => {
                                 warn!("task [{}] was killed because {:?}", exited_task_id, kill_reason);
                                 self.terminal.lock().print_to_terminal(
-                                    format!("task [{}] was killed because {:?}\n", exited_task_id, kill_reason)
+                                    &format!("task [{}] was killed because {:?}\n", exited_task_id, kill_reason)
                                 );
                             }
                         }
@@ -1151,8 +1150,7 @@ impl Shell {
             {
                 if is_stopped {
                     self.terminal.lock().print_to_terminal(
-                        format!("[{}] [stopped] {}\n", job_num, job.cmd)
-                        .to_string()
+                        &format!("[{}] [stopped] {}\n", job_num, job.cmd)
                     );
                 }
             }
@@ -1168,8 +1166,7 @@ impl Shell {
                     #[cfg(not(bm_ipc))]
                     {
                         self.terminal.lock().print_to_terminal(
-                            format!("[{}] [finished] {}\n", job_num, job.cmd)
-                            .to_string()
+                            &format!("[{}] [finished] {}\n", job_num, job.cmd)
                         );
                     }
                 }
@@ -1206,8 +1203,8 @@ impl Shell {
         let curr_env = self.env.lock();
         let mut prompt = curr_env.working_dir.lock().get_absolute_path();
         prompt = format!("{}: ",prompt);
-        self.terminal.lock().print_to_terminal(prompt);
-        self.terminal.lock().print_to_terminal(self.cmdline.clone());
+        self.terminal.lock().print_to_terminal(&prompt);
+        self.terminal.lock().print_to_terminal(&self.cmdline);
     }
 
     /// If there is any output event from running application, print it to the screen, otherwise it does nothing.
@@ -1218,7 +1215,7 @@ impl Shell {
         if let Some(print_event) = self.print_consumer.peek() {
             match print_event.deref() {
                 &Event::OutputEvent(ref s) => {
-                    self.terminal.lock().print_to_terminal(s.clone());
+                    self.terminal.lock().print_to_terminal(&s);
                 },
                 _ => { },
             }
@@ -1239,7 +1236,7 @@ impl Shell {
                     mem::drop(stdout);
                     let s = String::from_utf8_lossy(&buf[0..cnt]);
                     let mut locked_terminal = self.terminal.lock();
-                    locked_terminal.print_to_terminal(s.to_string());
+                    locked_terminal.print_to_terminal(&s);
                     if cnt != 0 { need_refresh = true; }
                 },
                 Err(_) => {
@@ -1257,7 +1254,7 @@ impl Shell {
                         mem::drop(stderr);
                         let s = String::from_utf8_lossy(&buf[0..cnt]);
                         let mut locked_terminal = self.terminal.lock();
-                        locked_terminal.print_to_terminal(s.to_string());
+                        locked_terminal.print_to_terminal(&s);
                         if cnt != 0 { need_refresh = true; }
                     },
                     Err(_) => {
@@ -1427,7 +1424,7 @@ impl Shell {
         iter.next();
         let args: Vec<&str> = iter.collect();
         if args.len() != 1 {
-            self.terminal.lock().print_to_terminal("Usage: bg %job_num\n".to_string());
+            self.terminal.lock().print_to_terminal("Usage: bg %job_num\n");
             return Ok(());
         }
         if let Some('%') = args[0].chars().nth(0) {
@@ -1444,11 +1441,11 @@ impl Shell {
                     self.redisplay_prompt();
                     return Ok(());
                 }
-                self.terminal.lock().print_to_terminal(format!("No job number {} found!\n", job_num).to_string());
+                self.terminal.lock().print_to_terminal(&format!("No job number {} found!\n", job_num));
                 return Ok(());
             }
         }
-        self.terminal.lock().print_to_terminal("Usage: bg %job_num\n".to_string());
+        self.terminal.lock().print_to_terminal("Usage: bg %job_num\n");
         Ok(())
     }
 
@@ -1459,7 +1456,7 @@ impl Shell {
         iter.next();
         let args: Vec<&str> = iter.collect();
         if args.len() != 1 {
-            self.terminal.lock().print_to_terminal("Usage: fg %job_num\n".to_string());
+            self.terminal.lock().print_to_terminal("Usage: fg %job_num\n");
             return Ok(());
         }
         if let Some('%') = args[0].chars().nth(0) {
@@ -1475,11 +1472,11 @@ impl Shell {
                     }
                     return Ok(());
                 }
-                self.terminal.lock().print_to_terminal(format!("No job number {} found!\n", job_num).to_string());
+                self.terminal.lock().print_to_terminal(&format!("No job number {} found!\n", job_num));
                 return Ok(());
             }
         }
-        self.terminal.lock().print_to_terminal("Usage: fg %job_num\n".to_string());
+        self.terminal.lock().print_to_terminal(&"Usage: fg %job_num\n");
         Ok(())
     }
 
@@ -1490,10 +1487,10 @@ impl Shell {
                 JobStatus::Running => "running",
                 JobStatus::Stopped => "stopped"
             };
-            self.terminal.lock().print_to_terminal(format!("[{}] [{}] {}\n", job_num, status, job_ref.cmd).to_string());
+            self.terminal.lock().print_to_terminal(&format!("[{}] [{}] {}\n", job_num, status, job_ref.cmd));
         }
         if self.jobs.is_empty() {
-            self.terminal.lock().print_to_terminal("No running or stopped jobs.\n".to_string());
+            self.terminal.lock().print_to_terminal("No running or stopped jobs.\n");
         }
         self.clear_cmdline(false)?;
         self.redisplay_prompt();

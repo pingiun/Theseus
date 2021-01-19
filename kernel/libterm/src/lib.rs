@@ -447,14 +447,14 @@ impl Terminal {
         };
         terminal.display_text()?;
 
-        terminal.print_to_terminal(format!("Theseus Terminal Emulator\nPress Ctrl+C to quit a task\n"));
+        terminal.print_to_terminal(&format!("Theseus Terminal Emulator\nPress Ctrl+C to quit a task\n"));
         Ok(terminal)
     }
 
     /// Adds a string to be printed to the terminal to the terminal scrollback buffer.
     /// Note that one needs to call `refresh_display` to get things actually printed. 
-    pub fn print_to_terminal(&mut self, s: String) {
-        self.scrollback_buffer.push_str(&s);
+    pub fn print_to_terminal(&mut self, s: &str) {
+        self.scrollback_buffer.push_str(s);
     }
 
     /// Actually refresh the screen. Currently it's expensive.
