@@ -357,7 +357,7 @@ impl MappedPages {
             tlb_flush_virt_addr(page.start_address());
         }
         
-        if let Some(func) = BROADCAST_TLB_SHOOTDOWN_FUNC.try() {
+        if let Some(func) = BROADCAST_TLB_SHOOTDOWN_FUNC.get() {
             func(self.pages.deref().clone());
         }
 
@@ -391,7 +391,7 @@ impl MappedPages {
     
         #[cfg(not(bm_map))]
         {
-            if let Some(func) = BROADCAST_TLB_SHOOTDOWN_FUNC.try() {
+            if let Some(func) = BROADCAST_TLB_SHOOTDOWN_FUNC.get() {
                 func(self.pages.deref().clone());
             }
         }

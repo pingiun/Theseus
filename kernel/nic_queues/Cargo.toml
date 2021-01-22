@@ -6,7 +6,9 @@ authors = ["Ramla-I <ijazramla@gmail.com>"]
 build = "../../build.rs"
 
 [dependencies]
-owning_ref = { git = "https://github.com/kevinaboos/owning-ref-rs" }
+
+[dependencies.owning_ref]
+path = "../../libs/owning_ref"
 
 [dependencies.memory]
 path = "../memory"

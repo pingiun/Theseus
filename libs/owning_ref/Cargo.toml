@@ -1,0 +1,19 @@
+[package]
+name = "owning_ref"
+version = "0.4.0"
+authors = ["Marvin Löbel <loebel.marvin@gmail.com>"]
+license = "MIT"
+
+description = "A library for creating references that carry their owner with them."
+readme = "README.md"
+documentation = "http://kimundi.github.io/owning-ref-rs/owning_ref/index.html"
+
+repository = "https://github.com/Kimundi/owning-ref-rs"
+keywords = ["reference", "sibling", "field", "owning"]
+
+[dependencies]
+spin = "0.7.1"
+
+[dependencies.stable_deref_trait]
+path = "../stable_deref_trait"
+
