@@ -12,6 +12,8 @@ extern crate spin;
 extern crate fs_node;
 extern crate memory;
 
+use core::cmp::{max, min};
+
 use alloc::string::String;
 use alloc::vec::Vec;
 use spin::Mutex;
@@ -97,7 +99,7 @@ pub struct VFSFile {
     /// The file size 
     size: usize, 
     /// The string contents as a file: this primitive can be changed into a more complex struct as files become more complex
-    _contents: String,
+    contents: String,
     /// A weak reference to the parent directory
     parent: WeakDirRef,
 }
@@ -106,8 +108,8 @@ impl VFSFile {
     pub fn new(name: String, size: usize, contents: String, parent: &DirRef) -> Result<FileRef, &'static str> {
         let file = VFSFile {
             name: name, 
-            size: size, 
-            _contents: contents,
+            size: contents.as_bytes().len(), 
+            contents: contents,
             parent: Arc::downgrade(parent),
         };
         let file_ref = Arc::new(Mutex::new(file)) as FileRef;
@@ -117,8 +119,13 @@ impl VFSFile {
 }
 
 impl File for VFSFile {
-    fn read(&self, _buf: &mut [u8], _offset: usize) -> Result<usize, &'static str> { 
-        Err("VFSFile::read() is unimplemented")
+    fn read(&self, buf: &mut [u8], offset: usize) -> Result<usize, &'static str> { 
+        let bytes = self.contents.as_bytes();
+        let to_write = max(buf.len(), bytes.len() - offset);
+        for i in 0..to_write {
+            buf[i] = bytes[i + offset];
+        }
+        Ok(to_write)
     }
 
     fn write(&mut self, _buf: &[u8], _offset: usize) -> Result<usize, &'static str> {
